@@ -1,0 +1,190 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8" />
+    <title>Making your first Phaser 3 Game - Part 7</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+    var config = {
+        type: Phaser.AUTO,
+        width: 1500,
+        height: 900,
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 300 },
+                debug: false
+            }
+        },
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        }
+    };
+
+    var player;
+    var platforms;
+    var cursors;
+
+    var game = new Phaser.Game(config);
+
+    function preload ()
+    {
+        this.load.image('sky', 'assets/back.png');
+        this.load.image('ground', 'assets/wood.png');
+		this.load.image('wall', 'assets/wall.png');
+        this.load.image('star', 'assets/star.png');
+        this.load.image('bomb', 'assets/bomb.png');
+		this.load.image('baltika', 'assets/baltika.png');
+		this.load.image('message', 'assets/message.png');
+		this.load.image('win', 'assets/win.gif');
+        this.load.spritesheet('dude', 'assets/hero.png', { frameWidth: 125, frameHeight: 150 });
+    }
+
+    function create ()
+    {
+        this.add.image(800, 450, 'sky');
+
+        platforms = this.physics.add.staticGroup();
+
+        platforms.create(750, 890, 'ground').setScale(2).refreshBody();
+
+        platforms.create(1125, 700, 'ground');
+        platforms.create(550, 530, 'ground');
+        platforms.create(850, 350, 'ground');
+		platforms.create(1250, 530,'wall');
+
+        player = this.physics.add.sprite(50, 800, 'dude');
+		player.displayWidth = 80;
+		player.displayHeight = 100;
+			
+        player.setCollideWorldBounds(true);
+
+		turnedLeft = false;
+		
+		var message;
+		
+        this.anims.create({
+            key: 'left',
+            frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+            frameRate: 8,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'turnleft',
+            frames: [ { key: 'dude', frame: 4 } ],
+            frameRate: 5
+        });
+		
+		this.anims.create({
+            key: 'turnright',
+            frames: [ { key: 'dude', frame: 5 } ],
+            frameRate: 5
+        });
+
+        this.anims.create({
+            key: 'right',
+            frames: this.anims.generateFrameNumbers('dude', { start: 6, end: 9 }),
+            frameRate: 8,
+            repeat: -1
+        });
+
+        cursors = this.input.keyboard.createCursorKeys();
+		
+		stars = this.physics.add.group({
+            key: 'star',
+            repeat: 16,
+            setXY: { x: 12, y: 0, stepX: 70 }
+        });
+
+        stars.children.iterate(function (child) {
+
+            child.setBounceY(Phaser.Math.FloatBetween(0.25, 0.3));
+
+        });
+		
+		baltika = this.physics.add.sprite(1450, 50, 'baltika');
+		
+        this.physics.add.collider(player, platforms);
+		this.physics.add.collider(stars, platforms);
+		this.physics.add.collider(baltika, platforms);
+		this.physics.add.overlap(player, stars, collectStar, null, this);
+		this.physics.add.overlap(player, baltika, drinkBaltika, null, this);
+		
+		function collectStar (player, star)
+			{
+				star.disableBody(true, true);
+			}
+		function drinkBaltika(player, baltika)
+			{
+				baltika.disableBody(true, true);
+				message = this.add.image(player.x - 50, player.y - 25, 'message');
+				timedEvent = this.time.addEvent({
+					delay: 2000,
+					callback: hideMessage,
+					callbackScope: this
+				})
+				this.add.image(750, 450, 'win');
+			}
+		function hideMessage()
+			{
+				message.alpha = 0;
+			}
+    }
+
+    function update ()
+    {
+        if (cursors.left.isDown)
+        {
+            player.setVelocityX(-160);
+			turnedLeft = true;
+			
+			if(player.body.touching.down)
+            player.anims.play('left', true);
+			else
+			player.anims.play('turnleft');
+        }
+        else if (cursors.right.isDown)
+        {
+            player.setVelocityX(160);
+			turnedLeft = false;
+			
+			if(player.body.touching.down)
+            player.anims.play('right', true);
+			else 
+			player.anims.play('turnright');
+        }
+        else
+        {
+            player.setVelocityX(0);
+			if (turnedLeft)
+				player.anims.play('turnleft');
+			else 
+				player.anims.play('turnright');
+        }
+
+        if (cursors.up.isDown && player.body.touching.down)
+        {
+			if (turnedLeft)
+				player.anims.play('turnleft');
+			else 
+				player.anims.play('turnright');
+            player.setVelocityY(-400);
+        }
+    }
+
+</script>
+
+</body>
+</html>
