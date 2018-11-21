@@ -13,16 +13,18 @@
 <body>
 
 <script type="text/javascript">
+	let game_width = window.innerWidth;
+	let game_height = window.innerHeight;
 
     var config = {
         type: Phaser.AUTO,
-        width: 1500,
-        height: 900,
+        width: 1000,
+        height: 800,
         physics: {
             default: 'arcade',
             arcade: {
                 gravity: { y: 300 },
-                debug: false
+                debug: true
             }
         },
         scene: {
@@ -53,7 +55,8 @@
 
     function create ()
     {
-        this.add.image(800, 450, 'sky');
+        let background = this.add.image(800, 450, 'sky');
+        background.setScrollFactor(0);
 
         platforms = this.physics.add.staticGroup();
 
@@ -68,7 +71,11 @@
 		player.displayWidth = 80;
 		player.displayHeight = 100;
 			
-        player.setCollideWorldBounds(true);
+        //player.setCollideWorldBounds(true);
+
+        let camera;
+		camera = this.cameras.main;
+		camera.startFollow(player, true, 0.4, 0.4);
 
 		turnedLeft = false;
 		
@@ -116,6 +123,7 @@
 		
 		baltika = this.physics.add.sprite(1450, 50, 'baltika');
 		
+
         this.physics.add.collider(player, platforms);
 		this.physics.add.collider(stars, platforms);
 		this.physics.add.collider(baltika, platforms);
@@ -168,6 +176,7 @@
         else
         {
             player.setVelocityX(0);
+            player.setAcceleration(0);
 			if (turnedLeft)
 				player.anims.play('turnleft');
 			else 
@@ -181,6 +190,7 @@
 			else 
 				player.anims.play('turnright');
             player.setVelocityY(-400);
+  			player.setMass(600);
         }
     }
 
